@@ -1,2 +1,3 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
 </manifest>

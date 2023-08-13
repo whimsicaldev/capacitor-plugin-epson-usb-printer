@@ -9,14 +9,17 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "EpsonUSBPrinter")
 public class EpsonUSBPrinterPlugin extends Plugin {
 
-    private EpsonUSBPrinter implementation = new EpsonUSBPrinter();
+    private EpsonUSBPrinter implementation;
+
+    @Override
+    public void load() {
+        implementation = new EpsonUSBPrinter(getContext());
+    }
 
     @PluginMethod
-    public void echo(PluginCall call) {
-        String value = call.getString("value");
-
-        JSObject ret = new JSObject();
-        ret.put("value", implementation.echo(value));
-        call.resolve(ret);
+    public void getPrinterList(PluginCall call) {
+        JSObject jsObject = new JSObject();
+        jsObject.put("printerList", implementation.getPrinterList());
+        call.resolve(jsObject);
     }
 }

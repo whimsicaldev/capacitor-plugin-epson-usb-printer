@@ -1,3 +1,8 @@
 export interface EpsonUSBPrinterPlugin {
-  echo(options: { value: string }): Promise<{ value: string }>;
+  getPrinterList(): Promise<{ printerList: PrinterInfo[] }>;
+}
+
+export interface PrinterInfo {
+  productId: string;
+  productName: string;
 }
