@@ -1,6 +1,6 @@
 {
   "name": "capacitor-plugin-epson-usb-printer",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Capacitor Plugin for printing to epson usb printer",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -17,10 +17,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gerarrd/capacitor-plugin-epson-usb-printer.git.git"
+    "url": "git+https://github.com/whimsicaldev/capacitor-plugin-epson-usb-printer.git.git"
   },
   "bugs": {
-    "url": "https://github.com/gerarrd/capacitor-plugin-epson-usb-printer.git/issues"
+    "url": "https://github.com/whimsicaldev/capacitor-plugin-epson-usb-printer.git/issues"
   },
   "keywords": [
     "capacitor",
