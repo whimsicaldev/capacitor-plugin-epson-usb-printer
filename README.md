@@ -14,6 +14,8 @@ npx cap sync
 <docgen-index>
 
 * [`getPrinterList()`](#getprinterlist)
+* [`connectToPrinter(...)`](#connecttoprinter)
+* [`print(...)`](#print)
 * [Interfaces](#interfaces)
 
 </docgen-index>
@@ -24,10 +26,38 @@ npx cap sync
 ### getPrinterList()
 
 ```typescript
-getPrinterList() => Promise<{ printerList: PrinterInfo[]; }>
+getPrinterList() => Promise<{ printerList: EpsonUSBPrinterInfo[]; }>
 ```
 
-**Returns:** <code>Promise&lt;{ printerList: PrinterInfo[]; }&gt;</code>
+**Returns:** <code>Promise&lt;{ printerList: EpsonUSBPrinterInfo[]; }&gt;</code>
+
+--------------------
+
+
+### connectToPrinter(...)
+
+```typescript
+connectToPrinter(options: { productId: number; }) => Promise<{ connected: boolean; }>
+```
+
+| Param         | Type                                |
+| ------------- | ----------------------------------- |
+| **`options`** | <code>{ productId: number; }</code> |
+
+**Returns:** <code>Promise&lt;{ connected: boolean; }&gt;</code>
+
+--------------------
+
+
+### print(...)
+
+```typescript
+print(options: { printObject: string; }) => Promise<void>
+```
+
+| Param         | Type                                  |
+| ------------- | ------------------------------------- |
+| **`options`** | <code>{ printObject: string; }</code> |
 
 --------------------
 
@@ -35,11 +65,12 @@ getPrinterList() => Promise<{ printerList: PrinterInfo[]; }>
 ### Interfaces
 
 
-#### PrinterInfo
+#### EpsonUSBPrinterInfo
 
-| Prop              | Type                |
-| ----------------- | ------------------- |
-| **`productId`**   | <code>string</code> |
-| **`productName`** | <code>string</code> |
+| Prop              | Type                 |
+| ----------------- | -------------------- |
+| **`productId`**   | <code>number</code>  |
+| **`productName`** | <code>string</code>  |
+| **`connected`**   | <code>boolean</code> |
 
 </docgen-api>
