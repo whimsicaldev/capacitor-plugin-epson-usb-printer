@@ -26,7 +26,7 @@ public class EpsonUSBPrinterConstant {
         EPSON_STYLE_LIST.put("UNDERLINED", new byte[] {(byte) 27, (byte) 33, (byte) 128});
 
         // reset the styling commands that are already set
-        EPSON_COMMAND_LIST.put("RESET", new byte[] {(byte)27, (byte) 64});
+        EPSON_COMMAND_LIST.put("RESET", new byte[] {(byte) 27, (byte) 64});
         EPSON_COMMAND_LIST.put("PARTIAL_CUT", new byte[] {(byte) 27, (byte) 105});
         EPSON_COMMAND_LIST.put("FULL_CUT", new byte[] {(byte) 27, (byte) 109});
         EPSON_COMMAND_LIST.put("LINE_BREAK", new byte[] {(byte) 10});
