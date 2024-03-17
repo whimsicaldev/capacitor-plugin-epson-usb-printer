@@ -140,8 +140,12 @@ public class EpsonUSBPrinter {
 
             if(lineEntry.getLineText() != null) {
                 String printData = lineEntry.getLineText();
-                this.connection.bulkTransfer(this.usbEndpoint, printData.getBytes(), printData.getBytes().length, 10000);
-                this.connection.bulkTransfer(this.usbEndpoint, LN, LN.length, 10000);
+                String[] splitData = printData.split("\\n");
+
+                for (String print: splitData) {
+                    this.connection.bulkTransfer(this.usbEndpoint, print.getBytes(), print.getBytes().length, 10000);
+                    this.connection.bulkTransfer(this.usbEndpoint, LN, LN.length, 10000);
+                }
             }
 
             if(lineEntry.getLineCommandList() != null) {

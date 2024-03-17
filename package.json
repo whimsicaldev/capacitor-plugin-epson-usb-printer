@@ -1,6 +1,6 @@
 {
   "name": "capacitor-plugin-epson-usb-printer",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "description": "Capacitor Plugin for printing to epson usb printer",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",

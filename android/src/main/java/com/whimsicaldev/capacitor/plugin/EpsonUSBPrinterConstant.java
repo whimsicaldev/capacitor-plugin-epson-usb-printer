@@ -17,6 +17,7 @@ public class EpsonUSBPrinterConstant {
         // text horizontal alignment
         EPSON_STYLE_LIST.put("ALIGN_LEFT", new byte[] {(byte) 27, (byte) 97, (byte) 0});
         EPSON_STYLE_LIST.put("ALIGN_CENTER", new byte[] {(byte) 27, (byte) 97, (byte) 1});
+        EPSON_STYLE_LIST.put("ALIGN_JUSTIFIED", new byte[] {(byte) 27, (byte) 97, (byte) 1});
         EPSON_STYLE_LIST.put("ALIGN_RIGHT", new byte[] {(byte) 27, (byte) 97, (byte) 2});
 
         EPSON_STYLE_LIST.put("WIDE", new byte[] {(byte) 27, (byte) 33, (byte) 4});

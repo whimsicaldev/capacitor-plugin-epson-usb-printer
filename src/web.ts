@@ -14,6 +14,7 @@ export class EpsonUSBPrinterWeb extends WebPlugin implements EpsonUSBPrinterPlug
     ["ALIGN_LEFT", new Uint8Array([27, 97, 0])],
     ["ALIGN_CENTER", new Uint8Array([27, 97, 1])],
     ["ALIGN_RIGHT", new Uint8Array([27, 97, 2])],
+    ["ALIGN_JUSTIFIED", new Uint8Array([27, 97, 1])],
     ["WIDE", new Uint8Array([27, 33, 4])],
     ["EMPHASIZED", new Uint8Array([27, 33, 8])],
     ["STRETCHED_WIDTH", new Uint8Array([27, 33, 16])],
@@ -113,8 +114,12 @@ export class EpsonUSBPrinterWeb extends WebPlugin implements EpsonUSBPrinterPlug
 
       if(lineEntry.lineText != null) {
           const printData: string = lineEntry.lineText;
-          this.selectedDevice.transferOut(this.endpointNumber, encoder.encode(printData));
-          this.selectedDevice.transferOut(this.endpointNumber, LN);
+          const splitData: string[] = printData.split("\\n");
+
+          splitData.forEach(data => {
+            this.selectedDevice.transferOut(this.endpointNumber, encoder.encode(data));
+            this.selectedDevice.transferOut(this.endpointNumber, LN);
+          });
       }
     });
 
