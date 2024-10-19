@@ -15,5 +15,5 @@ export interface EpsonUSBPrinterPlugin {
 
   connectToPrinter(options: { productId: number }): Promise<{ connected: boolean; }>;
 
-  print(options: { printObject: string }): Promise<void>;
+  print(options: { printObject: string; lineFeed?: number }): Promise<void>;
 }

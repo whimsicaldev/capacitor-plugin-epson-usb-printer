@@ -52,12 +52,12 @@ connectToPrinter(options: { productId: number; }) => Promise<{ connected: boolea
 ### print(...)
 
 ```typescript
-print(options: { printObject: string; }) => Promise<void>
+print(options: { printObject: string; lineFeed?: number; }) => Promise<void>
 ```
 
-| Param         | Type                                  |
-| ------------- | ------------------------------------- |
-| **`options`** | <code>{ printObject: string; }</code> |
+| Param         | Type                                                     |
+| ------------- | -------------------------------------------------------- |
+| **`options`** | <code>{ printObject: string; lineFeed?: number; }</code> |
 
 --------------------
 

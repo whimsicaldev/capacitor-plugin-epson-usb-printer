@@ -115,7 +115,7 @@ public class EpsonUSBPrinter {
         }
     }
 
-    public void print(String printObject) throws Exception {
+    public void print(String printObject, int lineFeed) throws Exception {
         if(this.connection == null) {
             throw new Exception("Currently not connected to a device.");
         } else if(this.usbInterface == null) {
@@ -159,7 +159,7 @@ public class EpsonUSBPrinter {
         }
 
         // line feed to push the prints beyond the printer cover
-        for(int i = 0; i < 6; i+=1) {
+        for(int i = 0; i < lineFeed; i+=1) {
             this.connection.bulkTransfer(this.usbEndpoint, LN, LN.length, 10000);
         }
 

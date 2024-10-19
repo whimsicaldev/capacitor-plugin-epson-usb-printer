@@ -62,8 +62,9 @@ public class EpsonUSBPrinterPlugin extends Plugin {
         }
 
         String printObject = call.getString("printObject");
+        int lineFeed = call.getInt("lineFeed", 0);
         try {
-            implementation.print(printObject);
+            implementation.print(printObject, lineFeed);
             call.resolve();
         } catch (Exception e) {
             call.reject(e.getMessage());

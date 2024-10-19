@@ -93,7 +93,7 @@ export class EpsonUSBPrinterWeb extends WebPlugin implements EpsonUSBPrinterPlug
   }
 
   
-  async print(options: { printObject: string; }): Promise<void> {
+  async print(options: { printObject: string; lineFeed?: number }): Promise<void> {
     const encoder: TextEncoder = new TextEncoder();
     await this.selectedDevice.claimInterface(this.interfaceNumber);
     
@@ -123,8 +123,10 @@ export class EpsonUSBPrinterWeb extends WebPlugin implements EpsonUSBPrinterPlug
       }
     });
 
-    for(let i = 0; i < 6; i += 1) {
-      this.selectedDevice.transferOut(this.endpointNumber, LN);
+    if(options.lineFeed) {
+      for(let i = 0; i < options.lineFeed; i += 1) {
+        this.selectedDevice.transferOut(this.endpointNumber, LN);
+      }
     }
     
     await this.selectedDevice.releaseInterface(this.interfaceNumber);
