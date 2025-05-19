@@ -20,6 +20,8 @@ import android.util.Log;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.nio.charset.StandardCharsets;
+
 public class EpsonUSBPrinter {
     private final Context context;
     private final String actionString;
@@ -42,7 +44,7 @@ public class EpsonUSBPrinter {
         this.deviceList = new ArrayList<>();
     }
 
-    public List<Map> getPrinterList() {
+    public List<Map> getPrinterList() throws Exception {
         List<Map> printerList = new ArrayList<>();
         PendingIntent mPermissionIntent = PendingIntent.getBroadcast(this.context, 0, new
                 Intent(actionString), PendingIntent.FLAG_IMMUTABLE);
@@ -143,7 +145,7 @@ public class EpsonUSBPrinter {
                 String[] splitData = printData.split("\\n");
 
                 for (String print: splitData) {
-                    this.connection.bulkTransfer(this.usbEndpoint, print.getBytes(), print.getBytes().length, 10000);
+                    this.connection.bulkTransfer(this.usbEndpoint, print.getBytes(StandardCharsets.UTF_8), print.getBytes(StandardCharsets.UTF_8).length, 10000);
                     this.connection.bulkTransfer(this.usbEndpoint, LN, LN.length, 10000);
                 }
             }

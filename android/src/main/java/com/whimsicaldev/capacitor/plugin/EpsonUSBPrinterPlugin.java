@@ -29,10 +29,14 @@ public class EpsonUSBPrinterPlugin extends Plugin {
 
     @PluginMethod
     public void getPrinterList(PluginCall call) {
-        JSObject jsObject = new JSObject();
-        JSONArray jsonArray = new JSONArray(implementation.getPrinterList());
-        jsObject.put("printerList", jsonArray);
-        call.resolve(jsObject);
+        try {
+            JSObject jsObject = new JSObject();
+            JSONArray jsonArray = new JSONArray(implementation.getPrinterList());
+            jsObject.put("printerList", jsonArray);
+            call.resolve(jsObject);
+        } catch(Exception e) {
+            call.reject(e.getMessage());
+        }
     }
 
     @PluginMethod
