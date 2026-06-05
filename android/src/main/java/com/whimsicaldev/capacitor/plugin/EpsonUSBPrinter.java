@@ -20,7 +20,7 @@ import android.util.Log;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.ArrayList.ArrayList;
+import java.util.ArrayList;
 
 public class EpsonUSBPrinter {
     private final Context context;
@@ -155,7 +155,7 @@ public class EpsonUSBPrinter {
                 String[] splitData = printData.split("\\n");
 
                 for (String print: splitData) {
-                    byte[] printBytes = print.getBytes();
+                    byte[] printBytes = print.getBytes(this.codePageInString);
                     this.queuePrintingData(printBytes);
                     this.queuePrintingData(LN);
                 }
@@ -173,13 +173,13 @@ public class EpsonUSBPrinter {
 
         // line feed to push the prints beyond the printer cover
         for(int i = 0; i < lineFeed; i+=1) {
-            this.queuePrintingData(LN, 10000);
+            this.queuePrintingData(LN);
         }
 
         this.connection.releaseInterface(this.usbInterface);
     }
 
-    private void queuePrintingData(byte[] data) {
+    private void queuePrintingData(byte[] data) throws Exception {
         this.printDataList.add(data);
         this.sendDataWithRetry();
     }
@@ -195,6 +195,7 @@ public class EpsonUSBPrinter {
 
         byte[] data = this.printDataList.remove(0);
         this.isPrinting = true;
+        int timeout = 10000;
         
         int totalBytesSent = 0;
         int maxRetries = 3;
