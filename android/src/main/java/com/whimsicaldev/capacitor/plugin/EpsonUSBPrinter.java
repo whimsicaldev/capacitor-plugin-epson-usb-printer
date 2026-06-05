@@ -128,6 +128,10 @@ public class EpsonUSBPrinter {
         this.connection.claimInterface(this.usbInterface, true);
         byte[] LN = EpsonUSBPrinterConstant.EPSON_COMMAND_LIST.get(EpsonUSBPrinterConstant.LN);
         byte[] RESET = EpsonUSBPrinterConstant.EPSON_COMMAND_LIST.get(EpsonUSBPrinterConstant.RESET);
+        
+        // Set character code page to PC437 (USA) - needed for UB-U03II compatibility
+        byte[] setCodePage = new byte[]{(byte) 0x1B, (byte) 0x74, (byte) 0x00};
+        sendDataWithRetry(usbEndpoint, setCodePage, 10000);
 
         for(EpsonUSBPrinterLineEntry lineEntry: printObjectList) {
             sendDataWithRetry(usbEndpoint, RESET, 10000);
