@@ -20,6 +20,8 @@ import android.util.Log;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList.ArrayList;
+
 public class EpsonUSBPrinter {
     private final Context context;
     private final String actionString;
@@ -33,6 +35,8 @@ public class EpsonUSBPrinter {
     private String printerModel;
     private final byte[] codePage = new byte[]{(byte) 0x1B, (byte) 0x74, (byte) 0x00};
     private final String codePageInString = "CP437";
+    private List<byte[]> printDataList = new ArrayList<>();
+    private boolean isPrinting = false;
 
     public String echo(String value) {
         Log.i("Echo", value);
@@ -133,14 +137,15 @@ public class EpsonUSBPrinter {
         byte[] LN = EpsonUSBPrinterConstant.EPSON_COMMAND_LIST.get(EpsonUSBPrinterConstant.LN);
         byte[] RESET = EpsonUSBPrinterConstant.EPSON_COMMAND_LIST.get(EpsonUSBPrinterConstant.RESET);
 
+        this.queuePrintingData(this.codePage);
+
         for(EpsonUSBPrinterLineEntry lineEntry: printObjectList) {
-            sendDataWithRetry(usbEndpoint, RESET, 10000);
-            sendDataWithRetry(usbEndpoint, this.codePage, 10000);
+            this.queuePrintingData(RESET);
             if(lineEntry.getLineStyleList() != null) {
                 for(String style: lineEntry.getLineStyleList()) {
                     byte[] styleValue = EpsonUSBPrinterConstant.EPSON_STYLE_LIST.get(style);
                     if(styleValue != null) {
-                        sendDataWithRetry(usbEndpoint, styleValue, 10000);
+                        this.queuePrintingData(styleValue);
                     }
                 }
             }
@@ -150,9 +155,9 @@ public class EpsonUSBPrinter {
                 String[] splitData = printData.split("\\n");
 
                 for (String print: splitData) {
-                    byte[] printBytes = print.getBytes(this.codePageInString);
-                    sendDataWithRetry(usbEndpoint, printBytes, 10000);
-                    sendDataWithRetry(usbEndpoint, LN, 10000);
+                    byte[] printBytes = print.getBytes();
+                    this.queuePrintingData(printBytes);
+                    this.queuePrintingData(LN);
                 }
             }
 
@@ -160,7 +165,7 @@ public class EpsonUSBPrinter {
                 for(String command: lineEntry.getLineCommandList()) {
                     byte[] commandValue = EpsonUSBPrinterConstant.EPSON_COMMAND_LIST.get(command);
                     if(commandValue != null) {
-                        sendDataWithRetry(usbEndpoint, commandValue, 10000);
+                        this.queuePrintingData(commandValue);
                     }
                 }
             }
@@ -168,13 +173,29 @@ public class EpsonUSBPrinter {
 
         // line feed to push the prints beyond the printer cover
         for(int i = 0; i < lineFeed; i+=1) {
-            sendDataWithRetry(usbEndpoint, LN, 10000);
+            this.queuePrintingData(LN, 10000);
         }
 
         this.connection.releaseInterface(this.usbInterface);
     }
 
-    private void sendDataWithRetry(UsbEndpoint endpoint, byte[] data, int timeout) throws Exception {
+    private void queuePrintingData(byte[] data) {
+        this.printDataList.add(data);
+        this.sendDataWithRetry();
+    }
+
+    private void sendDataWithRetry() throws Exception {
+        if(this.isPrinting) {
+            return;
+        }
+
+        if(this.printDataList.isEmpty()) {
+            return;
+        }
+
+        byte[] data = this.printDataList.remove(0);
+        this.isPrinting = true;
+        
         int totalBytesSent = 0;
         int maxRetries = 3;
         int retryCount = 0;
@@ -182,7 +203,7 @@ public class EpsonUSBPrinter {
         while (totalBytesSent < data.length && retryCount < maxRetries) {
             // Send only remaining data from offset totalBytesSent
             int remainingLength = data.length - totalBytesSent;
-            int bytesSent = this.connection.bulkTransfer(endpoint, data, totalBytesSent, remainingLength, timeout);
+            int bytesSent = this.connection.bulkTransfer(this.usbEndpoint, data, totalBytesSent, remainingLength, timeout);
             
             if (bytesSent < 0) {
                 throw new Exception("USB transfer failed. Error code: " + bytesSent);
@@ -205,13 +226,8 @@ public class EpsonUSBPrinter {
         if (totalBytesSent < data.length) {
             throw new Exception("Failed to send all data. Sent " + totalBytesSent + " of " + data.length + " bytes");
         }
-    }
-    
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02X ", b));
-        }
-        return sb.toString();
+
+        this.isPrinting = false;
+        this.sendDataWithRetry();
     }
 }
