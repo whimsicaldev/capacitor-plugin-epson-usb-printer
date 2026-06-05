@@ -20,8 +20,6 @@ import android.util.Log;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.nio.charset.StandardCharsets;
-
 public class EpsonUSBPrinter {
     private final Context context;
     private final String actionString;
@@ -33,8 +31,8 @@ public class EpsonUSBPrinter {
     private UsbDeviceConnection connection;
     private UsbDevice currentDevice;
     private String printerModel;
-    private byte[] codePage;
-    private String codePageInString;;
+    private final byte[] codePage = new byte[]{(byte) 0x1B, (byte) 0x74, (byte) 0x00};
+    private final String codePageInString = "CP437";
 
     public String echo(String value) {
         Log.i("Echo", value);
@@ -101,8 +99,6 @@ public class EpsonUSBPrinter {
         try {
             this.currentDevice = selectedDevice;
             this.printerModel = selectedDevice.getProductName();
-            this.codePage = getCodePageForModel();
-            this.codePageInString = getCodePageForModelInString();
             this.connection = this.manager.openDevice(selectedDevice);
             return true;
         } catch(Exception e) {
@@ -210,45 +206,7 @@ public class EpsonUSBPrinter {
             throw new Exception("Failed to send all data. Sent " + totalBytesSent + " of " + data.length + " bytes");
         }
     }
-
-    private byte[] getCodePageForModel() {
-        if (this.printerModel != null) {
-            String modelLower = this.printerModel.toLowerCase();
-            
-            // UB-U03II requires CP437 code page
-            if (modelLower.contains("ub-u03") || modelLower.contains("ubu03")) {
-                return new byte[]{(byte) 0x1B, (byte) 0x74, (byte) 0x00}; // CP437 (USA)
-            }
-            // TM-U220B works with multiple code pages, but UTF-8 compatible
-            else if (modelLower.contains("tm-u220b") || modelLower.contains("u220b")) {
-                return new byte[]{(byte) 0x1B, (byte) 0x74, (byte) 0x0B}; // UTF-8 code page
-            }
-        }
-        
-        // Default to CP437 for unknown models
-        Log.w("EpsonUSBPrinter", "Unknown printer model, defaulting to CP437");
-        return new byte[]{(byte) 0x1B, (byte) 0x74, (byte) 0x00};
-    }
-
-    private String getCodePageForModelInString() {
-        if (this.printerModel != null) {
-            String modelLower = this.printerModel.toLowerCase();
-            
-            // UB-U03II requires CP437 code page
-            if (modelLower.contains("ub-u03") || modelLower.contains("ubu03")) {
-                return "CP437";
-            }
-            // TM-U220B works with multiple code pages, but UTF-8 compatible
-            else if (modelLower.contains("tm-u220b") || modelLower.contains("u220b")) {
-                return StandardCharsets.UTF_8;
-            }
-        }
-        
-        // Default to CP437 for unknown models
-        Log.w("EpsonUSBPrinter", "Unknown printer model, defaulting to CP437");
-        return "CP437";
-    }
-
+    
     private String bytesToHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
