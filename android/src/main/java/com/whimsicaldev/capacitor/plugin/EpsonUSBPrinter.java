@@ -149,7 +149,7 @@ public class EpsonUSBPrinter {
                 String[] splitData = printData.split("\\n");
 
                 for (String print: splitData) {
-                    byte[] printBytes = print.getBytes(StandardCharsets.UTF_8);
+                    byte[] printBytes = print.getBytes("CP437");
                     sendDataWithRetry(usbEndpoint, printBytes, 10000);
                     sendDataWithRetry(usbEndpoint, LN, 10000);
                 }
