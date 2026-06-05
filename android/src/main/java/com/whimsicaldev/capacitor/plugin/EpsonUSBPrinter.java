@@ -31,6 +31,10 @@ public class EpsonUSBPrinter {
     private UsbEndpoint usbEndpoint;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private UsbDeviceConnection connection;
+    private UsbDevice currentDevice;
+    private String printerModel;
+    private byte[] codePage;
+    private String codePageInString;;
 
     public String echo(String value) {
         Log.i("Echo", value);
@@ -95,6 +99,10 @@ public class EpsonUSBPrinter {
         }
 
         try {
+            this.currentDevice = selectedDevice;
+            this.printerModel = selectedDevice.getProductName();
+            this.codePage = getCodePageForModel();
+            this.codePageInString = getCodePageForModelInString();
             this.connection = this.manager.openDevice(selectedDevice);
             return true;
         } catch(Exception e) {
@@ -128,13 +136,10 @@ public class EpsonUSBPrinter {
         this.connection.claimInterface(this.usbInterface, true);
         byte[] LN = EpsonUSBPrinterConstant.EPSON_COMMAND_LIST.get(EpsonUSBPrinterConstant.LN);
         byte[] RESET = EpsonUSBPrinterConstant.EPSON_COMMAND_LIST.get(EpsonUSBPrinterConstant.RESET);
-        
-        // Set character code page to PC437 (USA) - needed for UB-U03II compatibility
-        byte[] setCodePage = new byte[]{(byte) 0x1B, (byte) 0x74, (byte) 0x00};
-        sendDataWithRetry(usbEndpoint, setCodePage, 10000);
 
         for(EpsonUSBPrinterLineEntry lineEntry: printObjectList) {
             sendDataWithRetry(usbEndpoint, RESET, 10000);
+            sendDataWithRetry(usbEndpoint, this.codePage, 10000);
             if(lineEntry.getLineStyleList() != null) {
                 for(String style: lineEntry.getLineStyleList()) {
                     byte[] styleValue = EpsonUSBPrinterConstant.EPSON_STYLE_LIST.get(style);
@@ -149,7 +154,7 @@ public class EpsonUSBPrinter {
                 String[] splitData = printData.split("\\n");
 
                 for (String print: splitData) {
-                    byte[] printBytes = print.getBytes("CP437");
+                    byte[] printBytes = print.getBytes(this.codePageInString);
                     sendDataWithRetry(usbEndpoint, printBytes, 10000);
                     sendDataWithRetry(usbEndpoint, LN, 10000);
                 }
@@ -179,24 +184,76 @@ public class EpsonUSBPrinter {
         int retryCount = 0;
 
         while (totalBytesSent < data.length && retryCount < maxRetries) {
-            int bytesSent = this.connection.bulkTransfer(endpoint, data, data.length, timeout);
+            // Send only remaining data from offset totalBytesSent
+            int remainingLength = data.length - totalBytesSent;
+            int bytesSent = this.connection.bulkTransfer(endpoint, data, totalBytesSent, remainingLength, timeout);
+            
             if (bytesSent < 0) {
                 throw new Exception("USB transfer failed. Error code: " + bytesSent);
             }
-            totalBytesSent += bytesSent;
-            if (totalBytesSent < data.length) {
-                // Small delay before retry
+            
+            if (bytesSent == 0) {
+                // No bytes sent, retry with delay
                 try {
                     Thread.sleep(50);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
                 retryCount++;
+            } else {
+                totalBytesSent += bytesSent;
+                retryCount = 0; // Reset retry counter on successful transfer
             }
         }
 
         if (totalBytesSent < data.length) {
             throw new Exception("Failed to send all data. Sent " + totalBytesSent + " of " + data.length + " bytes");
         }
+    }
+
+    private byte[] getCodePageForModel() {
+        if (this.printerModel != null) {
+            String modelLower = this.printerModel.toLowerCase();
+            
+            // UB-U03II requires CP437 code page
+            if (modelLower.contains("ub-u03") || modelLower.contains("ubu03")) {
+                return new byte[]{(byte) 0x1B, (byte) 0x74, (byte) 0x00}; // CP437 (USA)
+            }
+            // TM-U220B works with multiple code pages, but UTF-8 compatible
+            else if (modelLower.contains("tm-u220b") || modelLower.contains("u220b")) {
+                return new byte[]{(byte) 0x1B, (byte) 0x74, (byte) 0x0B}; // UTF-8 code page
+            }
+        }
+        
+        // Default to CP437 for unknown models
+        Log.w("EpsonUSBPrinter", "Unknown printer model, defaulting to CP437");
+        return new byte[]{(byte) 0x1B, (byte) 0x74, (byte) 0x00};
+    }
+
+    private String getCodePageForModelInString() {
+        if (this.printerModel != null) {
+            String modelLower = this.printerModel.toLowerCase();
+            
+            // UB-U03II requires CP437 code page
+            if (modelLower.contains("ub-u03") || modelLower.contains("ubu03")) {
+                return "CP437";
+            }
+            // TM-U220B works with multiple code pages, but UTF-8 compatible
+            else if (modelLower.contains("tm-u220b") || modelLower.contains("u220b")) {
+                return StandardCharsets.UTF_8;
+            }
+        }
+        
+        // Default to CP437 for unknown models
+        Log.w("EpsonUSBPrinter", "Unknown printer model, defaulting to CP437");
+        return "CP437";
+    }
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X ", b));
+        }
+        return sb.toString();
     }
 }
