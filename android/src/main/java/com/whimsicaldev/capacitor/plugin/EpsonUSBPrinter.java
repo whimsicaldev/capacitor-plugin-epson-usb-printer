@@ -73,7 +73,7 @@ public class EpsonUSBPrinter {
         for(int i =0; i < usbDevice.getInterfaceCount(); i += 1) {
             UsbInterface usbInterface = usbDevice.getInterface(i);
             for (int j = 0; j < usbInterface.getEndpointCount(); j++) {
-                UsbEndpoint usbEndpoint = usbInterface.getEndpoint(i);
+                UsbEndpoint usbEndpoint = usbInterface.getEndpoint(j);
                 return UsbConstants.USB_ENDPOINT_XFER_BULK == usbEndpoint.getType() && UsbConstants.USB_DIR_OUT == usbEndpoint.getDirection();
             }
         }
@@ -107,7 +107,7 @@ public class EpsonUSBPrinter {
         for(int i =0; i < usbDevice.getInterfaceCount(); i += 1) {
             UsbInterface usbInterface = usbDevice.getInterface(i);
             for (int j = 0; j < usbInterface.getEndpointCount(); j++) {
-                UsbEndpoint usbEndpoint = usbInterface.getEndpoint(i);
+                UsbEndpoint usbEndpoint = usbInterface.getEndpoint(j);
                 if(UsbConstants.USB_ENDPOINT_XFER_BULK == usbEndpoint.getType() && UsbConstants.USB_DIR_OUT == usbEndpoint.getDirection()) {
                     this.usbInterface = usbInterface;
                     this.usbEndpoint = usbEndpoint;
@@ -130,12 +130,12 @@ public class EpsonUSBPrinter {
         byte[] RESET = EpsonUSBPrinterConstant.EPSON_COMMAND_LIST.get(EpsonUSBPrinterConstant.RESET);
 
         for(EpsonUSBPrinterLineEntry lineEntry: printObjectList) {
-            connection.bulkTransfer(usbEndpoint, RESET, RESET.length, 10000);
+            sendDataWithRetry(usbEndpoint, RESET, 10000);
             if(lineEntry.getLineStyleList() != null) {
                 for(String style: lineEntry.getLineStyleList()) {
                     byte[] styleValue = EpsonUSBPrinterConstant.EPSON_STYLE_LIST.get(style);
                     if(styleValue != null) {
-                        connection.bulkTransfer(usbEndpoint, styleValue, styleValue.length, 10000);
+                        sendDataWithRetry(usbEndpoint, styleValue, 10000);
                     }
                 }
             }
@@ -145,8 +145,9 @@ public class EpsonUSBPrinter {
                 String[] splitData = printData.split("\\n");
 
                 for (String print: splitData) {
-                    this.connection.bulkTransfer(this.usbEndpoint, print.getBytes(StandardCharsets.UTF_8), print.getBytes(StandardCharsets.UTF_8).length, 10000);
-                    this.connection.bulkTransfer(this.usbEndpoint, LN, LN.length, 10000);
+                    byte[] printBytes = print.getBytes(StandardCharsets.UTF_8);
+                    sendDataWithRetry(usbEndpoint, printBytes, 10000);
+                    sendDataWithRetry(usbEndpoint, LN, 10000);
                 }
             }
 
@@ -154,7 +155,7 @@ public class EpsonUSBPrinter {
                 for(String command: lineEntry.getLineCommandList()) {
                     byte[] commandValue = EpsonUSBPrinterConstant.EPSON_COMMAND_LIST.get(command);
                     if(commandValue != null) {
-                        connection.bulkTransfer(usbEndpoint, commandValue, commandValue.length, 10000);
+                        sendDataWithRetry(usbEndpoint, commandValue, 10000);
                     }
                 }
             }
@@ -162,9 +163,36 @@ public class EpsonUSBPrinter {
 
         // line feed to push the prints beyond the printer cover
         for(int i = 0; i < lineFeed; i+=1) {
-            this.connection.bulkTransfer(this.usbEndpoint, LN, LN.length, 10000);
+            sendDataWithRetry(usbEndpoint, LN, 10000);
         }
 
         this.connection.releaseInterface(this.usbInterface);
+    }
+
+    private void sendDataWithRetry(UsbEndpoint endpoint, byte[] data, int timeout) throws Exception {
+        int totalBytesSent = 0;
+        int maxRetries = 3;
+        int retryCount = 0;
+
+        while (totalBytesSent < data.length && retryCount < maxRetries) {
+            int bytesSent = this.connection.bulkTransfer(endpoint, data, data.length, timeout);
+            if (bytesSent < 0) {
+                throw new Exception("USB transfer failed. Error code: " + bytesSent);
+            }
+            totalBytesSent += bytesSent;
+            if (totalBytesSent < data.length) {
+                // Small delay before retry
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                retryCount++;
+            }
+        }
+
+        if (totalBytesSent < data.length) {
+            throw new Exception("Failed to send all data. Sent " + totalBytesSent + " of " + data.length + " bytes");
+        }
     }
 }
