@@ -30,6 +30,6 @@ public class EpsonUSBPrinterConstant {
         EPSON_COMMAND_LIST.put("RESET", new byte[] {(byte) 27, (byte) 64});
         EPSON_COMMAND_LIST.put("PARTIAL_CUT", new byte[] {(byte) 27, (byte) 105});
         EPSON_COMMAND_LIST.put("FULL_CUT", new byte[] {(byte) 27, (byte) 109});
-        EPSON_COMMAND_LIST.put("LINE_BREAK", new byte[] {(byte) 10});
+        EPSON_COMMAND_LIST.put("LINE_BREAK", new byte[] {(byte)0x1B, (byte)0x33, (byte)20, (byte) 0x0A});
     }
 }

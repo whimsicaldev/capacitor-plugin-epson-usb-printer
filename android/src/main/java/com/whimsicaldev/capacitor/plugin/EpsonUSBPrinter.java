@@ -167,12 +167,12 @@ public class EpsonUSBPrinter {
 
         // line feed to push the prints beyond the printer cover
         for(int i = 0; i < lineFeed; i+=1) {
-            this.queuePrintingData(LN);
+            this.printDiagnostic("  ");
         }
 
         this.connection.releaseInterface(this.usbInterface);
     }
-    
+
     private void printDiagnostic(String text) throws Exception {
         byte[] LN = EpsonUSBPrinterConstant.EPSON_COMMAND_LIST.get(EpsonUSBPrinterConstant.LN);
         char[] chars = text.toCharArray();
@@ -199,11 +199,7 @@ public class EpsonUSBPrinter {
     }
 
     private void sendDataWithRetry() throws Exception {
-        if(this.isPrinting) {
-            return;
-        }
-
-        if(this.printDataList.isEmpty()) {
+        if(this.isPrinting || this.printDataList.isEmpty()) {
             return;
         }
 
